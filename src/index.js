@@ -1,0 +1,1 @@
+import './common/test3.js'

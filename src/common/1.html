@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - geometry - catmull spline editor</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			body {
+				background-color: #f0f0f0;
+				color: #444;
+			}
+			a {
+				color: #08f;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div id="container"></div>
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - geometry - catmull spline editor
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '../build/three.module.js';
+
+      // 帧数监控
+      import Stats from './jsm/libs/stats.module.js';
+      // 根据属性动态生成控件
+			import { GUI } from './jsm/libs/dat.gui.module.js';
+
+      // 轨道控制器
+      import { OrbitControls } from './jsm/controls/OrbitControls.js';
+      // 变换控制器
+			import { TransformControls } from './jsm/controls/TransformControls.js';
+
+			let container, stats;
+			let camera, scene, renderer;
+			const splineHelperObjects = []; // 曲线帮助对象
+			let splinePointsLength = 4; // 曲线点长度（一开始只有四个点）
+			const positions = []; // 位置数组
+			const point = new THREE.Vector3(); // 3维点
+
+			const raycaster = new THREE.Raycaster(); // 射线计算对象
+			const pointer = new THREE.Vector2(); // 2维点
+			const onUpPosition = new THREE.Vector2(); // 2维点 上的位置
+			const onDownPosition = new THREE.Vector2(); // 2维点 下的位置
+
+			const geometry = new THREE.BoxGeometry( 20, 20, 20 ); // 盒子几何体
+			let transformControl; // 变换控制器对象
+
+			const ARC_SEGMENTS = 200; // 扇形 块数
+
+			const splines = {}; // 曲线对象
+
+			const params = {
+				uniform: true, // 统一
+				tension: 0.5, // 张力
+				centripetal: true, // 向心
+				chordal: true, // 弦
+				addPoint: addPoint, // 添加点
+				removePoint: removePoint, // 删除点
+				exportSpline: exportSpline // 导出曲线
+			};
+
+			init(); // 调用初始化函数
+			animate(); // 调用更新动画函数
+
+      // 初始化函数
+			function init() {
+
+				container = document.getElementById( 'container' ); // 画布DOM对象
+
+				scene = new THREE.Scene(); // 场景
+				scene.background = new THREE.Color( 0xf0f0f0 );
+
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 ); // 相机
+				camera.position.set( 0, 250, 1000 ); // 相机位置
+				scene.add( camera ); // 添加相机到场景
+
+				scene.add( new THREE.AmbientLight( 0xf0f0f0 ) ); // 给场景添加一个环境光
+				const light = new THREE.SpotLight( 0xffffff, 1.5 ); // 聚光灯
+				light.position.set( 0, 1500, 200 ); // 聚光灯位置
+				light.angle = Math.PI * 0.2; // 聚光灯最大范围
+				light.castShadow = true; // 聚光灯投射阴影
+				light.shadow.camera.near = 200;
+				light.shadow.camera.far = 2000;
+				light.shadow.bias = - 0.000222;
+				light.shadow.mapSize.width = 1024;
+				light.shadow.mapSize.height = 1024;
+				scene.add( light );
+
+				const planeGeometry = new THREE.PlaneGeometry( 2000, 2000 ); // 平面几何
+				planeGeometry.rotateX( - Math.PI / 2 ); // 把xy平面变为xZ平面
+				const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.2 } ); // 阴影材质
+
+				const plane = new THREE.Mesh( planeGeometry, planeMaterial ); // 平面网格
+				plane.position.y = - 200; // 平面网格向下（y轴负方向）移动200单位
+				plane.receiveShadow = true; // 接受阴影
+				scene.add( plane );
+
+				const helper = new THREE.GridHelper( 2000, 100 ); // 网格辅助器
+				helper.position.y = - 199; // w位置
+				helper.material.opacity = 0.25; // 不透明度
+				helper.material.transparent = true; // 透明度
+				scene.add( helper );
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio ); // 设置像素比
+				renderer.setSize( window.innerWidth, window.innerHeight );// 设置大小
+				renderer.shadowMap.enabled = true; // 开启阴影能力
+				container.appendChild( renderer.domElement );
+
+				stats = new Stats(); // 帧数监控
+				container.appendChild( stats.dom );
+
+				const gui = new GUI(); // GUI属性生成器
+        // 根据属性生成输入框控制器
+				gui.add( params, 'uniform' ); 
+				gui.add( params, 'tension', 0, 1 ).step( 0.01 ).onChange( function ( value ) {
+
+					splines.uniform.tension = value;
+					updateSplineOutline();  // 更新曲线的轮廓
+
+				} );
+				gui.add( params, 'centripetal' );
+				gui.add( params, 'chordal' );
+				gui.add( params, 'addPoint' );
+				gui.add( params, 'removePoint' );
+				gui.add( params, 'exportSpline' );
+				gui.open(); // 打开生成的输入框的面板
+
+				// Controls
+				const controls = new OrbitControls( camera, renderer.domElement ); // 轨道控制器
+				controls.damping = 0.2; //惯性
+				controls.addEventListener( 'change', render ); // change事件，每次轨道发生变化都调用一下渲染函数
+
+				transformControl = new TransformControls( camera, renderer.domElement ); // 变换控制器
+				transformControl.addEventListener( 'change', render ); // 属性发生变化就重新渲染一下
+				transformControl.addEventListener( 'dragging-changed', function ( event ) { // transformControl的dragging发生改变就控制一下轨道控制器启用禁用
+
+					controls.enabled = ! event.value;
+
+				} );
+				scene.add( transformControl );
+
+				transformControl.addEventListener( 'objectChange', function () { // 如果被控制的3D对象发生改变则触发该事件
+
+					updateSplineOutline(); // 更新曲线的轮廓
+
+				} );
+
+				document.addEventListener( 'pointerdown', onPointerDown ); // 指针得以激活时触发
+				document.addEventListener( 'pointerup', onPointerUp ); // 指针不再活跃时触发。
+				document.addEventListener( 'pointermove', onPointerMove ); // 指针改变其坐标时触发。
+
+				/*******
+				 * Curves
+				 *********/
+
+				for ( let i = 0; i < splinePointsLength; i ++ ) {
+
+					addSplineObject( positions[ i ] ); // 创建确定曲线的一个点
+
+				}
+
+				positions.length = 0; // 清除位置数组
+
+				for ( let i = 0; i < splinePointsLength; i ++ ) {
+
+					positions.push( splineHelperObjects[ i ].position );
+
+				}
+
+				const geometry = new THREE.BufferGeometry();
+				geometry.setAttribute( 'position', new THREE.BufferAttribute( new Float32Array( ARC_SEGMENTS * 3 ), 3 ) );
+
+				let curve = new THREE.CatmullRomCurve3( positions );
+				curve.curveType = 'catmullrom';
+				curve.mesh = new THREE.Line( geometry.clone(), new THREE.LineBasicMaterial( {
+					color: 0xff0000,
+					opacity: 0.35
+				} ) );
+				curve.mesh.castShadow = true;
+				splines.uniform = curve;
+
+				curve = new THREE.CatmullRomCurve3( positions );
+				curve.curveType = 'centripetal';
+				curve.mesh = new THREE.Line( geometry.clone(), new THREE.LineBasicMaterial( {
+					color: 0x00ff00,
+					opacity: 0.35
+				} ) );
+				curve.mesh.castShadow = true;
+				splines.centripetal = curve;
+
+				curve = new THREE.CatmullRomCurve3( positions );
+				curve.curveType = 'chordal';
+				curve.mesh = new THREE.Line( geometry.clone(), new THREE.LineBasicMaterial( {
+					color: 0x0000ff,
+					opacity: 0.35
+				} ) );
+				curve.mesh.castShadow = true;
+				splines.chordal = curve;
+
+				for ( const k in splines ) {
+
+					const spline = splines[ k ];
+					scene.add( spline.mesh );
+
+				}
+
+				load( [ new THREE.Vector3( 289.76843686945404, 452.51481137238443, 56.10018915737797 ),
+					new THREE.Vector3( - 53.56300074753207, 171.49711742836848, - 14.495472686253045 ),
+					new THREE.Vector3( - 91.40118730204415, 176.4306956436485, - 6.958271935582161 ),
+					new THREE.Vector3( - 383.785318791128, 491.1365363371675, 47.869296953772746 ) ] );
+
+			}
+
+			function addSplineObject( position ) {
+
+				const material = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } );
+				const object = new THREE.Mesh( geometry, material );
+
+				if ( position ) {
+
+					object.position.copy( position );
+
+				} else {
+
+					object.position.x = Math.random() * 1000 - 500;
+					object.position.y = Math.random() * 600;
+					object.position.z = Math.random() * 800 - 400;
+
+				}
+
+				object.castShadow = true;
+				object.receiveShadow = true;
+				scene.add( object );
+				splineHelperObjects.push( object );
+				return object;
+
+			}
+
+			function addPoint() {
+
+				splinePointsLength ++;
+
+				positions.push( addSplineObject().position );
+
+				updateSplineOutline();
+
+			}
+
+			function removePoint() {
+
+				if ( splinePointsLength <= 4 ) {
+
+					return;
+
+				}
+
+				const point = splineHelperObjects.pop();
+				splinePointsLength --;
+				positions.pop();
+
+				if ( transformControl.object === point ) transformControl.detach();
+				scene.remove( point );
+
+				updateSplineOutline();
+
+			}
+
+			function updateSplineOutline() {
+
+				for ( const k in splines ) {
+
+					const spline = splines[ k ];
+
+					const splineMesh = spline.mesh;
+					const position = splineMesh.geometry.attributes.position;
+
+					for ( let i = 0; i < ARC_SEGMENTS; i ++ ) {
+
+						const t = i / ( ARC_SEGMENTS - 1 );
+						spline.getPoint( t, point );
+						position.setXYZ( i, point.x, point.y, point.z );
+
+					}
+
+					position.needsUpdate = true;
+
+				}
+
+			}
+
+			function exportSpline() {
+
+				const strplace = [];
+
+				for ( let i = 0; i < splinePointsLength; i ++ ) {
+
+					const p = splineHelperObjects[ i ].position;
+					strplace.push( `new THREE.Vector3(${p.x}, ${p.y}, ${p.z})` );
+
+				}
+
+				console.log( strplace.join( ',\n' ) );
+				const code = '[' + ( strplace.join( ',\n\t' ) ) + ']';
+				prompt( 'copy and paste code', code );
+
+			}
+
+			function load( new_positions ) {
+
+				while ( new_positions.length > positions.length ) {
+
+					addPoint();
+
+				}
+
+				while ( new_positions.length < positions.length ) {
+
+					removePoint();
+
+				}
+
+				for ( let i = 0; i < positions.length; i ++ ) {
+
+					positions[ i ].copy( new_positions[ i ] );
+
+				}
+
+				updateSplineOutline();
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+				stats.update();
+
+			}
+
+			function render() {
+
+				splines.uniform.mesh.visible = params.uniform;
+				splines.centripetal.mesh.visible = params.centripetal;
+				splines.chordal.mesh.visible = params.chordal;
+				renderer.render( scene, camera );
+
+			}
+
+			function onPointerDown( event ) {
+
+				onDownPosition.x = event.clientX;
+				onDownPosition.y = event.clientY;
+
+			}
+
+			function onPointerUp() {
+
+				onUpPosition.x = event.clientX;
+				onUpPosition.y = event.clientY;
+
+				if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) transformControl.detach();
+
+			}
+
+			function onPointerMove( event ) {
+
+				pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+				raycaster.setFromCamera( pointer, camera );
+
+				const intersects = raycaster.intersectObjects( splineHelperObjects );
+
+				if ( intersects.length > 0 ) {
+
+					const object = intersects[ 0 ].object;
+
+					if ( object !== transformControl.object ) {
+
+						transformControl.attach( object );
+
+					}
+
+				}
+
+			}
+
+
+		</script>
+
+	</body>
+</html>
