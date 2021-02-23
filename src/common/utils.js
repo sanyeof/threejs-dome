@@ -53,10 +53,12 @@ function updateCameraAspect (renderer, camera) {
 // 将鼠标位置归一化为设备坐标。x 和 y 方向的取值范围是 (-1 to +1)
 function onTransitionMouseXYZ( event, domElement ) {
   let mouse = new THREE.Vector2();
-  // mouse.x = ( event.clientX / domElement.innerWidth ) * 2 - 1;
-  // mouse.y = - ( event.clientY / domElement.innerHeight ) * 2 + 1;
-  mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-  mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+  let domElementLeft = domElement.getBoundingClientRect().left
+  let domElementTop = domElement.getBoundingClientRect().top
+  mouse.x =  ((event.clientX - domElementLeft) / domElement.clientWidth) * 2 - 1
+  mouse.y = -((event.clientY - domElementTop) / domElement.clientHeight) * 2 + 1
+  // mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+  // mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
   return mouse;
 }
 
