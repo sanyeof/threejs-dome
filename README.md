@@ -1,4 +1,4 @@
-## 3D模型标注three.js
+# 3D模型标注three.js
 1、入门教程：https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
 2、深入教程：https://threejsfundamentals.org/
 3、Github：https://github.com/mrdoob/three.js/tree/master
@@ -7,7 +7,7 @@
 
 
 
-## 基本概念
+# 基本概念
 要创建一个threejs应用，就必须了解组成threejs应用的基本概念：场景、相机、渲染器
 相机：我们在屏幕上看场景内容的视图工具，相当于我们的眼睛
 场景：一些模型或者其它等所在的环境，相当于我们用眼睛看到的周围的各种物体等的环境，我们创建的各种模型都是直接通过add函数加进这里的
@@ -15,40 +15,40 @@
 
 
 
-## 用一个案例来入门 threejs （用threejs做一个简单的3D场景内添加标点的工具）
-## 环境准备（使用webpack）
-# 1、初始化nodejs项目
+# 用一个案例来入门 threejs （用threejs做一个简单的3D场景内添加标点的工具）
+# 环境准备（使用webpack）
+## 1、初始化nodejs项目
 npm init -y
 
-# 2、安装webpack、webpack-cli
+## 2、安装webpack、webpack-cli
 npm i --save-dev webpack
 npm i --save-dev webpack-cli
 
-# 3、创建 webpack.config.js ，具体配置可以看本教程所属项目的 webpack.config.js
+## 3、创建 webpack.config.js ，具体配置可以看本教程所属项目的 webpack.config.js
 
-# 4、安装threejs
+## 4、安装threejs
 npm i --save three
 
 
-## 开始开发
-# 1、导入依赖：
-# 封装的通用函数工具
+# 开始开发
+## 1、导入依赖：
+## 封装的通用函数工具
 import * as Utils from './utils.js';
 
-# 导入threejs模块
+## 导入threejs模块
 import * as THREE from 'three';
 
-# 由threejs官方提供的验证浏览器是否支持webgl的工具函数，需要到https://github.com/mrdoob/three.js/blob/master/examples/jsm/WebGL.js获取
+## 由threejs官方提供的验证浏览器是否支持webgl的工具函数，需要到https://github.com/mrdoob/three.js/blob/master/examples/jsm/WebGL.js获取
 import { WEBGL } from './WebGL.js';
 
-# 轨道控制器，用来给场景添加可用鼠标来移动旋转场景的功能
+## 轨道控制器，用来给场景添加可用鼠标来移动旋转场景的功能
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-# 变换控制器，用来给某一个模型添加可以用鼠标来在场景内移动该模型的功能
+## 变换控制器，用来给某一个模型添加可以用鼠标来在场景内移动该模型的功能
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 
-# 2、创建场景、相机、渲染器、灯光（Tips：以下代码都是在 WEBGL.isWebGLAvailable() 验证了浏览器有WebGL功能后编写的
-# 使用Utils工具里面的init函数初始化场景、相机、渲染器
+## 2、创建场景、相机、渲染器、灯光（Tips：以下代码都是在 WEBGL.isWebGLAvailable() 验证了浏览器有WebGL功能后编写的
+## 使用Utils工具里面的init函数初始化场景、相机、渲染器
 let { scene, camera, renderer } = Utils.init(
   { bgColor: 0xf0f0f0 },
   {
@@ -60,7 +60,7 @@ let { scene, camera, renderer } = Utils.init(
   }
 );
 
-# Utils.init 实现细节
+## Utils.init 实现细节
 function init (
   sceneConfig = {
     // 场景的背景色
@@ -93,19 +93,19 @@ function init (
   return { scene, camera, renderer };
 }
 
-# 创建完基本的 scene, camera, renderer 后，要设置相机的位置，不然相机会在（0, 0, 0）的位置；然后添加灯光，没有灯光的话，可能会看不到我们添加的模型
+## 创建完基本的 scene, camera, renderer 后，要设置相机的位置，不然相机会在（0, 0, 0）的位置；然后添加灯光，没有灯光的话，可能会看不到我们添加的模型
 // 相机位置
 camera.position.set( 0, 250, 1000 );
 // 给场景添加一个环境光
 scene.add( new THREE.AmbientLight( 0xf0f0f0 ) );
 
-# 3、添加轨道控制器
+## 3、添加轨道控制器
 // 创建一个轨道控制器实例，传入刚刚创建的的相机实例以及渲染器的容器dom对象
 const controls = new OrbitControls(camera, renderer.domElement);
 // 设置旋转的中心点
 controls.target.set(0, 0, 0);
 
-# 4、添加变换控制器
+## 4、添加变换控制器
 // 创建一个变换控制器实例，传入刚刚创建的的相机实例以及渲染器的容器dom对象
 let transformControl = new TransformControls( camera, renderer.domElement );
 
@@ -117,8 +117,8 @@ transformControl.addEventListener( 'dragging-changed', ( event ) => { //
 // 添加变换控制器到场景里
 scene.add( transformControl );
 
-# 5、添加一个底座平面，并且在这个底座上添加一些网格，以便标点参考位置
-# 添加一个底座平面
+## 5、添加一个底座平面，并且在这个底座上添加一些网格，以便标点参考位置
+## 添加一个底座平面
 // 平面几何
 const planeGeometry = new THREE.PlaneGeometry( 2000, 2000 );
 
@@ -137,7 +137,7 @@ plane.position.y = -200;
 // 把平面添加到场景里面
 scene.add( plane );
 
-# 网格辅助器
+## 网格辅助器
 // 创建一个网格辅助器的实例，传入参数 坐标格尺寸、坐标格细分次数
 const helper = new THREE.GridHelper( 2000, 100 ); 
 
@@ -153,7 +153,7 @@ helper.material.transparent = true;
 // 添加到场景
 scene.add( helper );
 
-# 6、添加一个立方体在（0, 0, 0），用标点参考物体
+## 6、添加一个立方体在（0, 0, 0），用标点参考物体
 // 创建以一个立方体
 const geometry = new THREE.BoxGeometry(50, 50, 50);
 
@@ -169,7 +169,7 @@ cube.position.set(0, 0, 0);
 // 把网格添加到场景
 scene.add( cube ); 
 
-# 7、定义添加标点的工厂函数，并初始化一个默认标点
+## 7、定义添加标点的工厂函数，并初始化一个默认标点
 // 一个存储标点实例对象的数组（给标点添加事件时有用）
 let objArr = []
 
@@ -210,7 +210,7 @@ function createMarkerCon() {
 // 创建一个标点
 createMarkerCon()
 
-# 9、定义获取所有标点的位置函数
+## 9、定义获取所有标点的位置函数
 let getPosition = () => {
   // 遍历 objArr 数组
   for (let i = 0; i < objArr.length; i++) {
@@ -225,14 +225,14 @@ let getPosition = () => {
   alert('位置信息已在控制台输出');
 }
 
-# 10、在html里面添加两个按钮，添加标点的按钮 和 获取标点位置的按钮，给这这两个按钮添加点击事件
+## 10、在html里面添加两个按钮，添加标点的按钮 和 获取标点位置的按钮，给这这两个按钮添加点击事件
 let add = document.getElementById('add');
 let get = document.getElementById('get');
 add.onclick = createMarkerCon;
 get.onclick = getPosition;
 
-# 11、给标点添加鼠标的点击、拖拽等事件，以便能利用鼠标对标点位置进行调整。在threejs的视图里面不进行一些转换，是没办法监听模型的事件的，要利用Raycaster来计算焦点，获取哪个模型与射线相交，从而让模型触发事件
-# // 事件捕捉
+## 11、给标点添加鼠标的点击、拖拽等事件，以便能利用鼠标对标点位置进行调整。在threejs的视图里面不进行一些转换，是没办法监听模型的事件的，要利用Raycaster来计算焦点，获取哪个模型与射线相交，从而让模型触发事件
+## // 事件捕捉
 // 创建一个射线实例对象
 let raycaster = new THREE.Raycaster();
 
@@ -245,7 +245,7 @@ let onDownPosition = new THREE.Vector2();
 // 存储 鼠标松开时的二维空间点
 let onUpPosition = new THREE.Vector2();
 
-# // 鼠标在移动时触发的事件
+## // 鼠标在移动时触发的事件
 let onPointermove = ( event ) => {
   // 通过 Utils.onTransitionMouseXYZ 函数把将鼠标位置归一化为设备坐标（实现细节请直接看Utils工具类）
   mouse = Utils.onTransitionMouseXYZ(event, renderer.domElement);
@@ -265,13 +265,13 @@ let onPointermove = ( event ) => {
   }
 }
 
-# // 鼠标按键按下时触发的事件
+## // 鼠标按键按下时触发的事件
 let onPointerdown = ( event ) => {
   onDownPosition.x = event.clientX;
   onDownPosition.y = event.clientY;
 }
 
-# // 鼠标按键松开时触发的事件（相当于点击事件触发）
+## // 鼠标按键松开时触发的事件（相当于点击事件触发）
 let onPointerup = ( event ) => {
   onUpPosition.x = event.clientX;
   onUpPosition.y = event.clientY;
@@ -283,7 +283,7 @@ let onPointerup = ( event ) => {
   }
 }
 
-# // 点击事件（在onPointerup函数里调用）
+## // 点击事件（在onPointerup函数里调用）
 let onClick = (event) => {
   // 通过 Utils.onTransitionMouseXYZ 函数把将鼠标位置归一化为设备坐标（实现细节请直接看Utils工具类）
   let mouse = Utils.onTransitionMouseXYZ(event, renderer.domElement);
@@ -345,7 +345,7 @@ window.addEventListener( 'pointermove', onPointermove, false );
 window.addEventListener( 'pointerdown', onPointerdown, false );
 window.addEventListener( 'pointerup', onPointerup, false );
 
-# 12、最后，虽然上面添加了很多东西，但是还是缺少很重要的一步，这一步不完成，页面是看不到效果的，因为加那么多东西，都没有利用初始化好的renderer对象来把相机和场景渲染到视图上。现在来完成这一步
+## 12、最后，虽然上面添加了很多东西，但是还是缺少很重要的一步，这一步不完成，页面是看不到效果的，因为加那么多东西，都没有利用初始化好的renderer对象来把相机和场景渲染到视图上。现在来完成这一步
 function animate() {
   // 在浏览器重绘之前渲染（requestAnimationFrame是什么？请看：https://developer.mozilla.org/zh-CN/docs/Web/API/Window/requestAnimationFrame）
   requestAnimationFrame( animate );
@@ -358,7 +358,7 @@ function animate() {
 }
 animate();
 
-## 到了这里，基本上就完成了threejs的基本使用。如果要加载UI那么给过来的各种格式的模型的话（如 .gltf 格式的模型），可以使用threejs提供的模型加载器来实现，居然有哪些加载器，请看本教程头部链接的官方文档。加载模型举个例子：
+# 到了这里，基本上就完成了threejs的基本使用。如果要加载UI那么给过来的各种格式的模型的话（如 .gltf 格式的模型），可以使用threejs提供的模型加载器来实现，居然有哪些加载器，请看本教程头部链接的官方文档。加载模型举个例子：
 // 导入 .gltf 格式的模型模型加载器
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
