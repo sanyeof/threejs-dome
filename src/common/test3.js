@@ -23,7 +23,7 @@ if (WEBGL.isWebGLAvailable()) {
       far: 100000
     }
   );
-  renderer.shadowMap.enabled = true; // 开启阴影能力
+  // renderer.shadowMap.enabled = true; // 开启阴影能力
   camera.position.set( 0, 250, 1000 ); // 相机位置
   scene.add( new THREE.AmbientLight( 0xf0f0f0 ) ); // 给场景添加一个环境光
 
@@ -36,10 +36,10 @@ if (WEBGL.isWebGLAvailable()) {
   // document.body.appendChild( labelRenderer.domElement );
 
   // 轨道控制器
-  const controls = new OrbitControls(camera, canvas);
-  controls.damping = 0.2; //惯性
+  const controls = new OrbitControls(camera, renderer.domElement);
+  // controls.damping = 0.2; //惯性
   controls.target.set(0, 0, 0);
-  controls.update();
+  // controls.update();
 
   // 变换控制器
   let transformControl = new TransformControls( camera, renderer.domElement );
@@ -49,24 +49,25 @@ if (WEBGL.isWebGLAvailable()) {
   scene.add( transformControl );
 
   // 添加一个阴影聚光灯
-  const light = new THREE.SpotLight( 0xffffff, 1.5 ); // 聚光灯
-				light.position.set( 0, 1500, 200 ); // 聚光灯位置
-				light.angle = Math.PI * 0.2; // 聚光灯最大范围
-				light.castShadow = true; // 聚光灯投射阴影
-				light.shadow.camera.near = 200;
-				light.shadow.camera.far = 2000;
-				light.shadow.bias = - 0.000222;
-				light.shadow.mapSize.width = 1024;
-				light.shadow.mapSize.height = 1024;
-				scene.add( light );
+  // const light = new THREE.SpotLight( 0xffffff, 1.5 ); // 聚光灯
+	// 			light.position.set( 0, 1500, 200 ); // 聚光灯位置
+	// 			light.angle = Math.PI * 0.2; // 聚光灯最大范围
+	// 			light.castShadow = true; // 聚光灯投射阴影
+	// 			light.shadow.camera.near = 200;
+	// 			light.shadow.camera.far = 2000;
+	// 			light.shadow.bias = - 0.000222;
+	// 			light.shadow.mapSize.width = 1024;
+	// 			light.shadow.mapSize.height = 1024;
+	// 			scene.add( light );
 
   // 添加一个底座平面
   const planeGeometry = new THREE.PlaneGeometry( 2000, 2000 ); // 平面几何
   planeGeometry.rotateX( - Math.PI / 2 ); // 把xy平面变为xZ平面
-  const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.2 } ); // 阴影材质
+  // const planeMaterial = new THREE.ShadowMaterial( { opacity: 0.2 } ); // 阴影材质
+  const planeMaterial = new THREE.MeshBasicMaterial()
   const plane = new THREE.Mesh( planeGeometry, planeMaterial ); // 平面网格
   plane.position.y = -200; // 平面网格向下（y轴负方向）移动200单位
-  plane.receiveShadow = true; // 接受阴影
+  // plane.receiveShadow = true; // 接受阴影
   scene.add( plane );
 
   const helper = new THREE.GridHelper( 2000, 100 ); // 网格辅助器

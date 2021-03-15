@@ -1,0 +1,46 @@
+1、工具所在位置：/src/commom/utils.js
+
+2、使用前请先安装 three.js 依赖：npm install --save three
+
+3、工具导出五个函数： 
+    export {
+      init,
+      resizeRendererToDisplaySize,
+      updateCameraAspect,
+      onTransitionMouseXYZ,
+      getIntersects
+    }
+
+4、init(sceneConfig, cameraConfig, rendererConfig) ：return { scene, camera, renderer }
+    初始化函数，接受三个对象参数，可以不传，有默认参数。
+    第一个参数是场景配置参数，sceneConfig = { bgColor: 0xeeeeee }，只有一个配置背景色配置项属性，如果不能满足使用可以自行修改。
+    第二个参数是相机配置参数，
+        cameraConfig = {
+          fov: 75,
+          aspect: document.getElementById('canvas').innerWidth / document.getElementById('canvas').innerHeight,
+          near: 0.1,
+          far: 1000
+        }
+        有四个参数，fov 相机的视角宽度，aspect 相机的宽高比，near 物体距离相机的距离小于near就不会在相机里出现，far 则是相反。
+    第三个参数是渲染器配置参数，rendererConfig = { canvas: document.getElementById('canvas') }，只有 canvas 参数，代表应该在哪个元素里渲染效果。
+    函数会返回一个包含 场景 相机 渲染器 的对象
+ 
+5、resizeRendererToDisplaySize(renderer)：return true | false
+    画布的宽高动态设置函数，只接受一个 渲染器对象（init 函数返回的那个） ，当画布的大小发生变化时，会触发 renderer.setSize(width, height, false) 。
+    函数会返回一个 布尔值 （画布的大小发生变化时返回true）
+
+6、updateCameraAspect (renderer, camera)：null
+    更新相机宽高比的函数，接受 渲染器 和 相机 两个参数，在画布的大小发生变化时（resizeRendererToDisplaySize函数返回true），更新相机的 aspect ，以及通知相机更新矩阵。
+
+7、onTransitionMouseXYZ( event, domElement )：return Vector2
+    将鼠标位置归一化为设备坐标，x 和 y 方向的取值范围是 (-1 to +1) 的工具函数。
+    接受两个参数，第一个是鼠标事件的事件对象，第二个是挂载渲染器的那个dom元素（就init函数传入的canvas）
+    返回一个 THREE.Vector2() 实例
+
+8、getIntersects(event, domElement, camera, childrenList)：return []
+    获取与射线相焦的物体数组的函数，接受四个参数。
+    第一个鼠标事件的事件对象，onTransitionMouseXYZ 接受的第一个参数。
+    第二个挂载渲染器的那个dom元素，onTransitionMouseXYZ 接受的第二个参数。
+    第三个是相机。
+    第四个是需要用来计算相交的物体对象数组。
+    函数返回计算出的相交的物体对象数组。

@@ -40,7 +40,6 @@ function resizeRendererToDisplaySize (renderer) {
   }
   return needResize;
 }
-
 // 看看宽高是否有变化，就有更新宽高比
 function updateCameraAspect (renderer, camera) {
   if (resizeRendererToDisplaySize(renderer)) {
@@ -62,9 +61,21 @@ function onTransitionMouseXYZ( event, domElement ) {
   return mouse;
 }
 
+// 获取与射线相焦的物体数组
+function getIntersects(event, domElement, camera, childrenList) {
+  let raycaster = new THREE.Raycaster();
+  // 事件捕捉
+  // 通过摄像机和鼠标位置更新射线
+  raycaster.setFromCamera( onTransitionMouseXYZ(event, domElement), camera );
+  // 计算物体和射线的焦点
+  let intersects = raycaster.intersectObjects(childrenList);
+  return intersects
+}
+
 export {
   init,
   resizeRendererToDisplaySize,
   updateCameraAspect,
-  onTransitionMouseXYZ
+  onTransitionMouseXYZ,
+  getIntersects
 }
